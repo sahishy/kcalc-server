@@ -2,10 +2,10 @@ Deno.serve(async (req: Request) => {
     const url = new URL(req.url);
     const input = url.searchParams.get("name");
 
-    if (!input) {
+    if(!input) {
         return new Response(JSON.stringify({ error: "Missing 'name' query parameter" }), {
-        headers: { "Content-Type": "application/json" },
-        status: 400,
+            headers: { "Content-Type": "application/json" },
+            status: 400,
         });
     }
 
@@ -19,12 +19,14 @@ Deno.serve(async (req: Request) => {
         .trim();
 
     const apiKey = Deno.env.get("GOOGLE_APIKEY");
-    if (!apiKey) {
+    if(!apiKey) {
         return new Response(JSON.stringify({ error: "Missing GOOGLE_APIKEY" }), {
-        headers: { "Content-Type": "application/json" },
-        status: 500,
+            headers: { "Content-Type": "application/json" },
+            status: 500,
         });
     }
+
+    console.log(apiKey)
 
     const body = {
         contents: [
@@ -54,13 +56,16 @@ Deno.serve(async (req: Request) => {
     const geminiResponse = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
         {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
         },
     );
 
     const result = await geminiResponse.json();
+
+    console.log(JSON.stringify(result))
+
     const raw = result?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     const json = JSON.parse(raw.replaceAll("```", "").replaceAll("json", ""));
 
