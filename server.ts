@@ -67,6 +67,7 @@ async function getFood(input: string): Promise<string> {
             thinkingConfig: {
                 thinkingBudget: 0,
             },
+            tools: [{googleSearch: {}}],
         },
     });
 
