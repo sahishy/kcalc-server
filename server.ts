@@ -1,13 +1,14 @@
 import { GoogleGenAI } from "npm:@google/genai";
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 
-const GOOGLE_APIKEY = Deno.env.get("GOOGLE_APIKEY")!;
+const keyJson = JSON.parse(Deno.env.get("GOOGLE_SA_JSON")!);
 
 // Initialize Vertex AI GenAI client
 const ai = new GoogleGenAI({
   vertexai: true,
   project: Deno.env.get('GOOGLE_CLOUD_PROJECT')!,
   location: 'us-central1',
+  credentials: keyJson,
 });
 
 function normalizeInput(input: string): string {
