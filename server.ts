@@ -2,7 +2,13 @@ import { GoogleGenAI } from "npm:@google/genai";
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 
 const GOOGLE_APIKEY = Deno.env.get("GOOGLE_APIKEY")!;
-const ai = new GoogleGenAI({ apiKey: GOOGLE_APIKEY });
+
+// Initialize Vertex AI GenAI client
+const ai = new GoogleGenAI({
+  vertexai: true,
+  project: Deno.env.get('GOOGLE_CLOUD_PROJECT')!,
+  location: 'us-central1',
+});
 
 function normalizeInput(input: string): string {
     return input
@@ -15,10 +21,21 @@ function normalizeInput(input: string): string {
         .trim();
     }
 
+// Create a chat session for Vertex AI
+const chat = ai.chats.create({
+  model: 'projects/gen-lang-client-0229403474/locations/us-central1/publishers/google/models/gemini-2.5-flash-preview-05-20',
+  config: {
+    temperature: 0,
+    maxOutputTokens: 2048,
+    tools: [
+      { googleSearch: { maxResults: 3, timeout: 2000 } }
+    ],
+  }
+});
+
+// Use the chat session to get food macros
 async function getFood(input: string): Promise<string> {
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-preview-05-20",
-        contents: `
+  const prompt = `
 
                 Here is the user's input: ${input}
 
@@ -61,17 +78,9 @@ async function getFood(input: string): Promise<string> {
                         }
                     ]
                 }
-            `,
-            config: {
-            temperature: 0,
-            thinkingConfig: {
-                thinkingBudget: 0,
-            },
-            tools: [{googleSearch: {}}],
-        },
-    });
-
-    return response.text;
+            `;
+  const response = await chat.sendMessage({ author: 'user', content: prompt });
+  return response.text;
 }
 
 serve(async (req: Request) => {
