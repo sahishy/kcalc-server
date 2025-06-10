@@ -79,7 +79,7 @@ async function getFood(input: string): Promise<string> {
                     ]
                 }
             `;
-  const response = await chat.sendMessage({ author: 'user', content: prompt });
+  const response = await chat.sendMessage({ message: { author: 'user', content: prompt } });
   return response.text;
 }
 
