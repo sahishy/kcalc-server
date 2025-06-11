@@ -2,39 +2,7 @@ import { VertexAI } from "npm:@google-cloud/vertexai";
 import { GoogleAuth } from "npm:google-auth-library";
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 
-const saJson = Deno.env.get("GOOGLE_SA_JSON");
-if(!saJson) {
-    throw new Error("GOOGLE_SA_JSON environment variable not set.");
-}
-
-const keyJson = JSON.parse(saJson);
-keyJson.private_key = keyJson.private_key.replace(/\\n/g, "\n");
-
-const auth = new GoogleAuth({
-    scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-});
-const client = await auth.fromJSON(keyJson);
-
-const vertexAI = new VertexAI({
-    project: keyJson.project_id,
-    location: "us-central1",
-    googleAuthOverride: client,
-});
-
-const generativeModel = vertexAI.preview.getGenerativeModel({
-    model: "gemini-2.5-flash-preview-05-20",
-    generationConfig: {
-        temperature: 0,
-        maxOutputTokens: 2048,
-        tools: [
-            {
-                googleSearch: {
-                    maxResults: 3,
-                },
-            },
-        ],
-    },
-});
+const credentials = JSON.parse(Deno.env.get("GOOGLE_SECURITY_ACCOUNT_JSON"));
 
 function normalizeInput(input: string): string {
     return input
@@ -49,11 +17,13 @@ function normalizeInput(input: string): string {
         .trim();
 }
 
-async function getFood(input: string): Promise<string> {
+async function getFood(input) {
+
     const prompt = `
         Here is the user's input: ${input}
 
-        You are a nutrition analysis assistant. Given the user's input describing one or more food items, return a JSON object containing an array of food items. Each item should include the **total** estimated nutritional macros based on the quantity consumed.
+        You are a nutrition analysis assistant. Given the user's input describing one or more food items,
+        return a JSON object containing an array of food items. Each item should include the **total** estimated nutritional macros based on the quantity consumed.
 
         Each food item should have:
 
@@ -94,26 +64,61 @@ async function getFood(input: string): Promise<string> {
         }
     `;
 
-    const result = await generativeModel.generateContent({
-        contents: [
-            {
-                role: "user",
-                parts: [{ text: prompt }],
+    const auth = new GoogleAuth({
+        credentials: credentials,
+        scopes: 'https://www.googleapis.com/auth/cloud-platform',
+    });
+
+    const project = credentials.project_id;
+    const location = 'us-central1';
+
+    const vertexAI = new VertexAI({ project: project, location, auth });
+
+    const generativeModel = vertexAI.getGenerativeModel({
+        model: 'gemini-2.5-flash-preview-05-20',
+        generationConfig: {
+            maxOutputTokens: 8192,
+            temperature: 0,
+            thinking_config: {
+                thinkingBudget: 0
             },
+        },
+        tools: [
+            {
+                googleSearch: {}
+            }
         ],
     });
 
-    return result.response.candidates[0].content.parts[0].text;
+    const request = {
+        contents: [
+            { 
+                role: 'user', 
+                parts: [
+                    {
+                        text: prompt
+                    }
+                ]
+            },
+        ],
+    };
+
+    const response = await generativeModel.generateContent(request);
+    return response.response.candidates[0].content.parts[0].text;
+
 }
+
 
 serve(async (req: Request) => {
     const url = new URL(req.url);
 
-    if (url.pathname === "/api/food") {
+    if(url.pathname === "/api/food") {
         try {
+
             const name = url.searchParams.get("name") || "";
             const userInput = normalizeInput(name);
             const response = await getFood(userInput);
+
             const items = JSON.parse(
                 response.replaceAll("```", "").replaceAll("json", ""),
             ).items;
@@ -121,8 +126,11 @@ serve(async (req: Request) => {
             return new Response(JSON.stringify(items), {
                 headers: { "Content-Type": "application/json" },
             });
-        } catch (err) {
+
+        } catch(err) {
+
             console.error("Error:", err);
+            
             return new Response(
                 JSON.stringify({ error: (err as Error).message }),
                 {
@@ -130,6 +138,7 @@ serve(async (req: Request) => {
                     headers: { "Content-Type": "application/json" },
                 },
             );
+
         }
     }
 

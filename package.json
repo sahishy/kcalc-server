@@ -9,13 +9,22 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
+    "@google-cloud/aiplatform": "^4.2.0",
     "@google-cloud/vertexai": "^1.10.0",
     "@google/genai": "^1.4.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "google-auth-library": "^10.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sahishy/kcalc-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sahishy/kcalc-server/issues"
+  },
+  "homepage": "https://github.com/sahishy/kcalc-server#readme",
+  "description": ""
 }
