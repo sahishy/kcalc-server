@@ -17,7 +17,7 @@ function normalizeInput(input: string): string {
         .trim();
 }
 
-async function getFood(input) {
+async function getFood(input: string): Promise<String> {
 
     const prompt = `
         Here is the user's input: ${input}
