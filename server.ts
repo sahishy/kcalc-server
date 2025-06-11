@@ -152,6 +152,12 @@ async function getFood(input: string) {
     });
 
     const data = await response.json();
+
+    if(!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+        console.error("Unexpected response:", JSON.stringify(data, null, 2));
+        throw new Error("Invalid response from Vertex AI");
+    }
+
     return data.candidates[0].content.parts[0].text;
 }
 
