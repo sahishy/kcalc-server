@@ -1,8 +1,4 @@
-import { VertexAI } from "npm:@google-cloud/vertexai";
-import { GoogleAuth } from "npm:google-auth-library";
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
-
-const credentials = JSON.parse(Deno.env.get("GOOGLE_SECURITY_ACCOUNT_JSON"));
 
 function normalizeInput(input: string): string {
     return input
@@ -17,8 +13,70 @@ function normalizeInput(input: string): string {
         .trim();
 }
 
-async function getFood(input: string): Promise<String> {
+async function getAccessToken() {
+    const credentials = JSON.parse(Deno.env.get("GOOGLE_SECURITY_ACCOUNT_JSON"));
 
+    const header = {
+        alg: "RS256",
+        typ: "JWT",
+    };
+
+    const iat = Math.floor(Date.now() / 1000);
+    const exp = iat + 3600;
+
+    const payload = {
+        iss: credentials.client_email,
+        scope: "https://www.googleapis.com/auth/cloud-platform",
+        aud: "https://oauth2.googleapis.com/token",
+        exp,
+        iat,
+    };
+
+    function base64url(input: any) {
+        return btoa(Array.from(new Uint8Array(input), byte => String.fromCharCode(byte)).join(""))
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "");
+    }
+
+    const encoder = new TextEncoder();
+    const toSign = `${base64url(encoder.encode(JSON.stringify(header)))}.${base64url(encoder.encode(JSON.stringify(payload)))}`;
+
+    const key = await crypto.subtle.importKey(
+        "pkcs8",
+        str2ab(credentials.private_key),
+        { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+        false,
+        ["sign"],
+    );
+
+    const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, encoder.encode(toSign));
+    const jwt = `${toSign}.${base64url(signature)}`;
+
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+            grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+            assertion: jwt,
+        }),
+    });
+
+    const data = await res.json();
+    return data.access_token;
+
+    function str2ab(str: string) {
+        const binaryString = atob(str.split('\n').filter(l => !l.includes("PRIVATE KEY")).join(""));
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+}
+
+async function getFood(input: string) {
     const prompt = `
         Here is the user's input: ${input}
 
@@ -64,48 +122,37 @@ async function getFood(input: string): Promise<String> {
         }
     `;
 
-    const auth = new GoogleAuth({
-        credentials: credentials,
-        scopes: 'https://www.googleapis.com/auth/cloud-platform',
-    });
+    const credentials = JSON.parse(Deno.env.get("GOOGLE_SECURITY_ACCOUNT_JSON"));
+    const accessToken = await getAccessToken();
 
-    const project = credentials.project_id;
-    const location = 'us-central1';
-
-    const vertexAI = new VertexAI({ project: project, location, auth });
-
-    const generativeModel = vertexAI.getGenerativeModel({
-        model: 'gemini-2.5-flash-preview-05-20',
-        generationConfig: {
-            maxOutputTokens: 8192,
-            temperature: 0,
-            thinking_config: {
-                thinkingBudget: 0
-            },
+    const response = await fetch(`https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.5-flash-preview-05-20:generateContent`, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
         },
-        tools: [
-            {
-                googleSearch: {}
-            }
-        ],
+        body: JSON.stringify({
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        { text: prompt }
+                    ]
+                }
+            ],
+            generationConfig: {
+                maxOutputTokens: 8192,
+                temperature: 0,
+                topP: 0.8
+            },
+            tools: [
+                { googleSearch: {} }
+            ]
+        }),
     });
 
-    const request = {
-        contents: [
-            { 
-                role: 'user', 
-                parts: [
-                    {
-                        text: prompt
-                    }
-                ]
-            },
-        ],
-    };
-
-    const response = await generativeModel.generateContent(request);
-    return response.response.candidates[0].content.parts[0].text;
-
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
 }
 
 
