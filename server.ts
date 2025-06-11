@@ -18,7 +18,7 @@ const client = await auth.fromJSON(keyJson);
 const vertexAI = new VertexAI({
     project: keyJson.project_id,
     location: "us-central1",
-    auth: client,
+    googleAuthOverride: client,
 });
 
 const generativeModel = vertexAI.preview.getGenerativeModel({
