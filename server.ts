@@ -92,6 +92,7 @@ async function getFood(input: string) {
         - "carbs": total carbohydrates in grams
 
         Use real-world, web-sourced nutrition data. If quantity is not provided, assume a typical serving. Calculate totals accordingly.
+        Only use information from the top results when searching Google.
         If a user mentions a branded product, you must estimate macros using accurate, up-to-date data from the brand's official website or trusted sources.
 
         Respond with ONLY valid JSON. Do NOT include markdown formatting or extra text. Here is an example input & output:
@@ -147,9 +148,7 @@ async function getFood(input: string) {
             },
             tools: [
                 {
-                    googleSearch: {
-                        maxResults: 1
-                    }
+                    googleSearch: {}
                 }
             ]
         }),
