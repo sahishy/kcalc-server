@@ -143,10 +143,14 @@ async function getFood(input: string) {
             generationConfig: {
                 maxOutputTokens: 8192,
                 temperature: 0,
-                topP: 0.8
+                topP: 1
             },
             tools: [
-                { googleSearch: {} }
+                {
+                    googleSearch: {
+                        maxResults: 1
+                    }
+                }
             ]
         }),
     });
