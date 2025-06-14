@@ -206,12 +206,19 @@ serve(async (req: Request) => {
             const userInput = normalizeInput(name);
             const response = await getFood(userInput);
 
-            const cleaned = response
-                .replace(/```json|```/g, "")
-                .replace(/^[^{]+/, "")
-                .trim();
+            // Remove any markdown fences
+            const cleaned = response.replace(/```json|```/g, "");
 
-            const items = JSON.parse(cleaned).items;
+            // Extract first {...} JSON object
+            const startIdx = cleaned.indexOf("{");
+            const endIdx = cleaned.lastIndexOf("}");
+            if (startIdx === -1 || endIdx === -1) {
+                throw new Error(`Invalid JSON response received: ${cleaned}`);
+            }
+            const jsonString = cleaned.slice(startIdx, endIdx + 1);
+
+            // Parse the extracted JSON
+            const items = JSON.parse(jsonString).items;
 
             return new Response(JSON.stringify(items), {
                 headers: { "Content-Type": "application/json" },
