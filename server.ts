@@ -208,7 +208,7 @@ serve(async (req: Request) => {
 
             const cleaned = response
                 .replace(/```json|```/g, "")
-                .trimStart()
+                .replace(/^[^{]+/, "")
                 .trim();
 
             const items = JSON.parse(cleaned).items;
