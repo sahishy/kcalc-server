@@ -174,7 +174,7 @@ async function getFood(input: string) {
     );
 
     const reader = res.body?.getReader();
-    let fullText = "";
+    const parts: string[] = [];
 
     if (reader) {
         const decoder = new TextDecoder();
@@ -182,12 +182,11 @@ async function getFood(input: string) {
             const { done, value } = await reader.read();
             if (done) break;
             const chunk = decoder.decode(value, { stream: true });
-            // Parse each streaming chunk (NDJSON)
             for (const line of chunk.split('\n').filter(line => line.trim() !== "")) {
                 const parsed = JSON.parse(line);
                 const part = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (part) {
-                    fullText += part;
+                    parts.push(part);
                 }
             }
         }
@@ -195,7 +194,7 @@ async function getFood(input: string) {
         throw new Error("No stream received");
     }
 
-    return fullText;
+    return parts.join("");
 }
 
 serve(async (req: Request) => {
