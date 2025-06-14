@@ -146,11 +146,11 @@ async function getFood(input: string) {
                 temperature: 0,
                 topP: 1
             },
-            tools: [
-                {
-                    googleSearch: {}
-                }
-            ]
+            // tools: [
+            //     {
+            //         googleSearch: {}
+            //     }
+            // ]
         }),
     });
 
