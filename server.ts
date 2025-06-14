@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 
-// In-memory token cache
-let cachedToken: { token: string, expiry: number } | null = null;
-
 function normalizeInput(input: string): string {
     return input
         .toLowerCase()
@@ -19,18 +16,12 @@ function normalizeInput(input: string): string {
 async function getAccessToken() {
     const credentials = JSON.parse(Deno.env.get("GOOGLE_SECURITY_ACCOUNT_JSON"));
 
-    const now = Math.floor(Date.now() / 1000);
-
-    if (cachedToken && cachedToken.expiry - now > 60) {
-        return cachedToken.token;
-    }
-
     const header = {
         alg: "RS256",
         typ: "JWT",
     };
 
-    const iat = now;
+    const iat = Math.floor(Date.now() / 1000);
     const exp = iat + 3600;
 
     const payload = {
@@ -72,11 +63,6 @@ async function getAccessToken() {
     });
 
     const data = await res.json();
-    cachedToken = {
-        token: data.access_token,
-        expiry: exp
-    };
-
     return data.access_token;
 
     function str2ab(str: string) {
@@ -140,100 +126,75 @@ async function getFood(input: string) {
     const credentials = JSON.parse(Deno.env.get("GOOGLE_SECURITY_ACCOUNT_JSON"));
     const accessToken = await getAccessToken();
 
-    const controller = new AbortController();
-    const res = await fetch(
-        `https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.5-flash-preview-05-20:streamGenerateContent`,
-        {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${accessToken}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        role: "user",
-                        parts: [
-                            { text: prompt }
-                        ]
-                    }
-                ],
-                generationConfig: {
-                    maxOutputTokens: 1024, // lowered for speed
-                    temperature: 0,
-                    topP: 1
-                },
-                tools: [
-                    {
-                        googleSearch: {}
-                    }
-                ]
-            }),
-            signal: controller.signal
-        }
-    );
-
-    const reader = res.body?.getReader();
-    const parts: string[] = [];
-
-    if (reader) {
-        const decoder = new TextDecoder();
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = decoder.decode(value, { stream: true });
-            for (const line of chunk.split('\n').filter(line => line.trim() !== "")) {
-                const parsed = JSON.parse(line);
-                const part = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (part) {
-                    parts.push(part);
+    const response = await fetch(`https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.5-flash-preview-05-20:generateContent`, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        { text: prompt }
+                    ]
                 }
-            }
-        }
-    } else {
-        throw new Error("No stream received");
+            ],
+            generationConfig: {
+                maxOutputTokens: 8192,
+                temperature: 0,
+                topP: 1
+            },
+            tools: [
+                {
+                    googleSearch: {}
+                }
+            ]
+        }),
+    });
+
+    const data = await response.json();
+
+    if(!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+        console.error("Unexpected response:", JSON.stringify(data, null, 2));
+        throw new Error("Invalid response from Vertex AI");
     }
 
-    return parts.join("");
+    return data.candidates[0].content.parts[0].text;
 }
+
 
 serve(async (req: Request) => {
     const url = new URL(req.url);
 
-    if (url.pathname === "/api/food") {
+    if(url.pathname === "/api/food") {
         try {
+
             const name = url.searchParams.get("name") || "";
             const userInput = normalizeInput(name);
             const response = await getFood(userInput);
 
-            // Remove any markdown fences
-            const cleaned = response.replace(/```json|```/g, "");
-
-            // Extract first {...} JSON object
-            const startIdx = cleaned.indexOf("{");
-            const endIdx = cleaned.lastIndexOf("}");
-            if (startIdx === -1 || endIdx === -1) {
-                throw new Error(`Invalid JSON response received: ${cleaned}`);
-            }
-            const jsonString = cleaned.slice(startIdx, endIdx + 1);
-
-            // Parse the extracted JSON
-            const items = JSON.parse(jsonString).items;
+            const items = JSON.parse(
+                response.replaceAll("```", "").replaceAll("json", ""),
+            ).items;
 
             return new Response(JSON.stringify(items), {
                 headers: { "Content-Type": "application/json" },
             });
 
-        } catch (err) {
-            console.error("Error:", err);
+        } catch(err) {
 
+            console.error("Error:", err);
+            
             return new Response(
                 JSON.stringify({ error: (err as Error).message }),
                 {
                     status: 500,
                     headers: { "Content-Type": "application/json" },
-                }
+                },
             );
+
         }
     }
 
