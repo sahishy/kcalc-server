@@ -207,9 +207,11 @@ serve(async (req: Request) => {
             const userInput = normalizeInput(name);
             const response = await getFood(userInput);
 
-            const items = JSON.parse(
-                response.replaceAll("```", "").replaceAll("json", "")
-            ).items;
+            const cleaned = response
+                .replace(/```json|```/g, "")
+                .trim();
+
+            const items = JSON.parse(cleaned).items;
 
             return new Response(JSON.stringify(items), {
                 headers: { "Content-Type": "application/json" },
