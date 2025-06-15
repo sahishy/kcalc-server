@@ -91,9 +91,10 @@ async function getFood(input: string) {
         - "fat": total fat in grams
         - "carbs": total carbohydrates in grams
 
-        Use real-world, web-sourced nutrition data. If quantity is not provided, assume a typical serving. Calculate totals accordingly.
-        Only use information from the top results when searching Google.
-        If a user mentions a branded product, you must estimate macros using accurate, up-to-date data from the brand's official website or trusted sources.
+        Use real-world, web-sourced nutrition data from trustworthy databases like USDA, Nutrionix, Open Food Facts, etc. If quantity is not provided, assume a typical serving. Calculate totals accordingly.
+        Only use information from the top, most trustworthy, and accurate results when searching Google.
+        If a user mentions a branded product, you must estimate macros using accurate, up-to-date data from the brand's official website or. trusted sources.
+
 
         Respond with ONLY valid JSON. Do NOT include markdown formatting or extra text. Here is an example input & output:
 
@@ -127,7 +128,7 @@ async function getFood(input: string) {
     const accessToken = await getAccessToken();
 
     // const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.5-flash-preview-05-20:generateContent`;
-    const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.0-flash-001:generateContent`;
+    const url = `https://us-east4-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-east4/publishers/google/models/gemini-2.0-flash-001:generateContent`;
     const response = await fetch(url, {
         method: "POST",
         headers: {
