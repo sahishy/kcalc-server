@@ -115,43 +115,65 @@ async function getAccessToken() {
 
 async function getFood(input: string) {
     const prompt = `
-        You are a nutrition analysis assistant. Your sole task is to provide nutritional information for the food items described in the user's input. You MUST use the USDA FoodData Central (https://fdc.nal.usda.gov/) as your ONLY source of information.
+        You are a highly precise nutrition analysis assistant. Given the user's input, your goal is to return a JSON object with the most accurate and consistent nutritional information possible by following a strict sourcing hierarchy.
 
         Here is the user's input: ${input}
 
-        Your process is as follows:
-        1.  For each food item in the user's input, perform a search on the USDA FoodData Central website.
-        2.  Use the most relevant and generic entry for the food item unless a specific brand is mentioned. For "cooked chicken," you should look for a generic entry for cooked chicken.
-        3.  If you find a matching food item, extract the nutritional information for the specified quantity. The key nutrients to extract are:
-            * Energy (kcal) - report this as "calories"
-            * Protein (g)
-            * Total lipid (fat) (g) - report this as "fat"
-            * Carbohydrate, by difference (g) - report this as "carbs"
-        4.  If the user provides a quantity in grams or another unit, you must calculate the total nutritional values for that quantity based on the per-100g data from the USDA FoodData Central.
-        5.  If a user-provided food item cannot be found in the USDA FoodData Central, you MUST return an error for that specific item, clearly stating that the food was not found. Do not estimate or use information from any other source.
-        6.  Return the final output as a single, valid JSON object. Do not include any text or markdown formatting outside of the JSON object.
+        You MUST adhere to the following sourcing hierarchy to find the data for EACH item:
 
-        *** EXAMPLE ***
+        **1. Branded Products First:**
+        - If an item is a specific branded product (e.g., 'McDonald's Chicken McGriddle', 'Ben & Jerry's Cherry Garcia', 'Starbucks Grande Latte'), you MUST prioritize finding the official nutritional information directly from the brand's official website or their published nutritional data.
+        - Your search should be targeted to find this official data.
 
-        EXAMPLE Input:
-        200g of cooked chicken and 1 large apple
+        **2. Generic Foods from Reputable Databases:**
+        - If an item is generic (e.g., 'banana', 'cooked chicken breast', 'quinoa'), you should retrieve the data from a major, reputable nutritional database. Trustworthy options include USDA FoodData Central, Nutritionix, or Open Food Facts.
+        - For a generic item, use the most common or standard entry.
 
-        EXAMPLE Output:
+        **3. Handling Failure to Find Data:**
+        - If, after a thorough search following the hierarchy above, you absolutely cannot find a reliable source for a specific item, you MUST return the item with `null` for the nutritional values and add a descriptive note.
+        - Do NOT estimate or guess the nutritional values if a reliable source is not found.
+
+        **JSON Output Requirements:**
+        - Each food item in the JSON array must have:
+        - "description": The description of the food.
+        - "calories": Total calories (number).
+        - "protein": Total protein in grams (number).
+        - "fat": Total fat in grams (number).
+        - "carbs": Total carbohydrates in grams (number).
+        - "notes": A brief note on the data source (e.g., "From official McDonald's website.", "Generic data from USDA.", "Could not find a reliable source.").
+
+        Respond with ONLY a single, valid JSON object. Do NOT include markdown formatting or any explanatory text outside of the JSON.
+
+        ---
+
+        **EXAMPLE (For Formatting and Logic Reference Only):**
+
+        *NOTE: This example is to show the required JSON output format and the sourcing logic in action. Do not use these exact values for the user's input. The AI should find the values for the user's actual query.*
+
+        **Example Input:**
+
+        '1 chicken mcgriddle and a banana'
+
+        **Example Output:**
+
+        json
         {
             "items": [
                 {
-                    "description": "200g of cooked chicken",
-                    "calories": 334,
-                    "protein": 62.58,
-                    "fat": 7.72,
-                    "carbs": 0
+                    "description": "1 chicken mcgriddle",
+                    "calories": 380,
+                    "protein": 14,
+                    "fat": 14,
+                    "carbs": 50,
+                    "notes": "Data from official McDonald's website."
                 },
                 {
-                    "description": "1 large apple",
-                    "calories": 116,
-                    "protein": 0.58,
-                    "fat": 0.38,
-                    "carbs": 30.98
+                    "description": "1 banana",
+                    "calories": 105,
+                    "protein": 1.3,
+                    "fat": 0.4,
+                    "carbs": 27,
+                    "notes": "Generic data from reputable nutrition database."
                 }
             ]
         }
