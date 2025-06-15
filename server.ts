@@ -147,7 +147,7 @@ async function getFood(input: string) {
             generationConfig: {
                 maxOutputTokens: 1024,
                 temperature: 0,
-                topP: 1
+                topP: 0
             },
             tools: [
                 {
