@@ -131,10 +131,12 @@ async function getFood(input: string) {
         5.  If a user-provided food item cannot be found in the USDA FoodData Central, you MUST return an error for that specific item, clearly stating that the food was not found. Do not estimate or use information from any other source.
         6.  Return the final output as a single, valid JSON object. Do not include any text or markdown formatting outside of the JSON object.
 
-        Input:
+        *** EXAMPLE ***
+
+        EXAMPLE Input:
         200g of cooked chicken and 1 large apple
 
-        Output:
+        EXAMPLE Output:
         {
             "items": [
                 {
