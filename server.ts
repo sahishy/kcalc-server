@@ -130,7 +130,7 @@ async function getFood(input: string) {
         - For a generic item, use the most common or standard entry.
 
         **3. Handling Failure to Find Data:**
-        - If, after a thorough search following the hierarchy above, you absolutely cannot find a reliable source for a specific item, you MUST return the item with `null` for the nutritional values and add a descriptive note.
+        - If, after a thorough search following the hierarchy above, you absolutely cannot find a reliable source for a specific item, you MUST return the item with 'null' for the nutritional values and add a descriptive note.
         - Do NOT estimate or guess the nutritional values if a reliable source is not found.
 
         **JSON Output Requirements:**
