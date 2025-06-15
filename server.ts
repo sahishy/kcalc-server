@@ -115,47 +115,41 @@ async function getAccessToken() {
 
 async function getFood(input: string) {
     const prompt = `
+        You are a nutrition analysis assistant. Your sole task is to provide nutritional information for the food items described in the user's input. You MUST use the USDA FoodData Central (https://fdc.nal.usda.gov/) as your ONLY source of information.
+
         Here is the user's input: ${input}
 
-        You are a nutrition analysis assistant. Given the user's input describing one or more food items,
-        return a JSON object containing an array of food items. Each item should include the **total** estimated nutritional macros based on the quantity consumed.
-
-        Each food item should have:
-
-        - "description": the description of the food
-        - "calories": total calories for the quantity given
-        - "protein": total protein in grams
-        - "fat": total fat in grams
-        - "carbs": total carbohydrates in grams
-
-        Use real-world, web-sourced nutrition data from trustworthy databases like USDA, Nutrionix, Open Food Facts, etc. If quantity is not provided, assume a typical serving. Calculate totals accordingly.
-        Only use information from the top, most trustworthy, and accurate results when searching Google.
-        If a user mentions a branded product, you must estimate macros using accurate, up-to-date data from the brand's official website or. trusted sources.
-
-
-        Respond with ONLY valid JSON. Do NOT include markdown formatting or extra text. Here is an example input & output:
+        Your process is as follows:
+        1.  For each food item in the user's input, perform a search on the USDA FoodData Central website.
+        2.  Use the most relevant and generic entry for the food item unless a specific brand is mentioned. For "cooked chicken," you should look for a generic entry for cooked chicken.
+        3.  If you find a matching food item, extract the nutritional information for the specified quantity. The key nutrients to extract are:
+            * Energy (kcal) - report this as "calories"
+            * Protein (g)
+            * Total lipid (fat) (g) - report this as "fat"
+            * Carbohydrate, by difference (g) - report this as "carbs"
+        4.  If the user provides a quantity in grams or another unit, you must calculate the total nutritional values for that quantity based on the per-100g data from the USDA FoodData Central.
+        5.  If a user-provided food item cannot be found in the USDA FoodData Central, you MUST return an error for that specific item, clearly stating that the food was not found. Do not estimate or use information from any other source.
+        6.  Return the final output as a single, valid JSON object. Do not include any text or markdown formatting outside of the JSON object.
 
         Input:
-
-        2 bananas and 3 tablespoons peanut butter
+        200g of cooked chicken and 1 large apple
 
         Output:
-
         {
             "items": [
                 {
-                    "description": "2 bananas",
-                    "calories": 210,
-                    "protein": 2.6,
-                    "fat": 0.8,
-                    "carbs": 54
+                    "description": "200g of cooked chicken",
+                    "calories": 334,
+                    "protein": 62.58,
+                    "fat": 7.72,
+                    "carbs": 0
                 },
                 {
-                    "description": "3 tablespoons peanut butter",
-                    "calories": 285,
-                    "protein": 12,
-                    "fat": 24,
-                    "carbs": 9
+                    "description": "1 large apple",
+                    "calories": 116,
+                    "protein": 0.58,
+                    "fat": 0.38,
+                    "carbs": 30.98
                 }
             ]
         }
