@@ -126,7 +126,9 @@ async function getFood(input: string) {
     const credentials = JSON.parse(Deno.env.get("GOOGLE_SECURITY_ACCOUNT_JSON"));
     const accessToken = await getAccessToken();
 
-    const response = await fetch(`https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.5-flash-preview-05-20:generateContent`, {
+    // const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.5-flash-preview-05-20:generateContent`;
+    const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.0-flash-001:generateContent`;
+    const response = await fetch(url, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${accessToken}`,
@@ -142,15 +144,15 @@ async function getFood(input: string) {
                 }
             ],
             generationConfig: {
-                maxOutputTokens: 8192,
+                maxOutputTokens: 1024,
                 temperature: 0,
                 topP: 1
             },
-            // tools: [
-            //     {
-            //         googleSearch: {}
-            //     }
-            // ]
+            tools: [
+                {
+                    googleSearch: {}
+                }
+            ]
         }),
     });
 
