@@ -127,7 +127,12 @@ async function getFood(input) {
 
         **2. Generic Foods from Reputable Databases:**
         - If an item is generic (e.g., 'banana', 'cooked chicken breast', 'quinoa'), you should retrieve the data from a major, reputable nutritional database. Trustworthy options include USDA FoodData Central, Nutritionix, or Open Food Facts.
-        - For a generic item, use the most common or standard entry.
+        - **For generic items with vague descriptions, infer the most common or standard form and preparation when searching.** For example:
+            - **If "chicken" is provided without further detail, assume "chicken, cooked, with skin, common preparation (e.g., roasted or baked)."**
+            - **If "banana" is provided, assume "banana, raw, ripe, common size."**
+            - **If "rice" is provided without further detail, assume "white rice, cooked."**
+            - **Apply similar common-sense defaults for other generic foods where specific details are omitted.**
+        - **Always prioritize the most widely consumed or standard version of a generic food when selecting an entry from the reputable databases, even when making these inferences.**
 
         **3. Handling Failure to Find Data:**
         - If, after a thorough search following the hierarchy above, you absolutely cannot find a reliable source for a specific item, you MUST return the item with 'null' for the nutritional values and add a descriptive note.
