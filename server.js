@@ -1,7 +1,13 @@
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
-import test_agent from "./agents/test_agent.js";
+// import test_agent from "./agents/test_agent.js";
 
 const agent_system = async (input) => {
+
+    return JSON.stringify({
+        'items': [
+            'hi'
+        ]
+    })
 
     const response = await test_agent(input)
     return response
