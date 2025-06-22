@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 
-function normalizeInput(input: string): string {
-    const unitMap: Record<string, string> = {
+function normalizeInput(input) {
+    const unitMap = {
         g: "gram", gram: "gram", grams: "gram",
         kg: "kilogram", kgs: "kilogram", kilograms: "kilogram",
         ml: "milliliter", milliliters: "milliliter",
@@ -69,7 +69,7 @@ async function getAccessToken() {
         iat,
     };
 
-    function base64url(input: any) {
+    function base64url(input) {
         return btoa(Array.from(new Uint8Array(input), byte => String.fromCharCode(byte)).join(""))
             .replace(/\+/g, "-")
             .replace(/\//g, "_")
@@ -102,7 +102,7 @@ async function getAccessToken() {
     const data = await res.json();
     return data.access_token;
 
-    function str2ab(str: string) {
+    function str2ab(str) {
         const binaryString = atob(str.split('\n').filter(l => !l.includes("PRIVATE KEY")).join(""));
         const len = binaryString.length;
         const bytes = new Uint8Array(len);
@@ -113,7 +113,7 @@ async function getAccessToken() {
     }
 }
 
-async function getFood(input: string) {
+async function getFood(input) {
     const prompt = `
         You are a highly precise nutrition analysis assistant. Given the user's input, your goal is to return a JSON object with the most accurate and consistent nutritional information possible by following a strict sourcing hierarchy.
 
@@ -229,7 +229,7 @@ async function getFood(input: string) {
 }
 
 
-serve(async (req: Request) => {
+serve(async (req) => {
     const url = new URL(req.url);
 
     if(url.pathname === "/api/food") {
@@ -252,7 +252,7 @@ serve(async (req: Request) => {
             console.error("Error:", err);
             
             return new Response(
-                JSON.stringify({ error: (err as Error).message }),
+                JSON.stringify({ error: err.message }),
                 {
                     status: 500,
                     headers: { "Content-Type": "application/json" },
