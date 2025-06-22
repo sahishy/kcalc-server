@@ -207,9 +207,9 @@ async function getFood(input: string) {
     const accessToken = await getAccessToken();
 
     const PROJECT_ID = credentials.project_id;
-    const LOCATION_ID = 'global';
-    const API_ENDPOINT = 'aiplatform.googleapis.com';
-    const MODEL_ID = 'gemini-2.5-flash-lite-preview-06-17';
+    const LOCATION_ID = 'us-east1';
+    const API_ENDPOINT = 'us-east1-aiplatform.googleapis.com';
+    const MODEL_ID = 'gemini-2.5-flash';
     const GENERATE_CONTENT_API = 'generateContent';
 
     // const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.5-flash-preview-05-20:generateContent`;
