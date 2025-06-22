@@ -1,7 +1,5 @@
-import google_security_account_json from '../google/gen-lang-client-0229403474-4ba1ea3ef123.json' with { type: 'json' }
-
 async function get_access_token() {
-    const credentials = google_security_account_json;
+    const credentials = JSON.parse(Deno.env.get("GOOGLE_SECURITY_ACCOUNT_JSON"));
 
     const header = {
         alg: "RS256",
