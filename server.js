@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.203.0/http/server.js";
+import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 import test_agent from "./agents/test_agent.js";
 
 const agent_system = async (input) => {
