@@ -210,7 +210,7 @@ async function getFood(input: string) {
     const LOCATION_ID = 'global';
     const API_ENDPOINT = 'aiplatform.googleapis.com';
     const MODEL_ID = 'gemini-2.5-flash-lite-preview-06-17';
-    const GENERATE_CONTENT_API = 'streamGenerateContent';
+    const GENERATE_CONTENT_API = 'generateContent';
 
     // const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.5-flash-preview-05-20:generateContent`;
     const url = `https://${API_ENDPOINT}/v1/projects/${PROJECT_ID}/locations/${LOCATION_ID}/publishers/google/models/${MODEL_ID}:${GENERATE_CONTENT_API}`;
