@@ -1,7 +1,6 @@
-import path from 'path'
-import { fileURLToPath } from 'url';
+import path from 'node:path'
+import { fileURLToPath } from 'node:url';
 import get_response from '../utils/get_response.js';
-import get_url from '../utils/get_url.js';
 
 const agent = fileURLToPath(import.meta.url).split(path.dirname(fileURLToPath(import.meta.url))+'/').pop().split('.')[0];
 

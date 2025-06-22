@@ -1,5 +1,5 @@
-import path from 'path'
-import { fileURLToPath } from 'url';
+import path from 'node:path'
+import { fileURLToPath } from 'node:url';
 import get_prompt from '../utils/get_prompt.js';
 import get_url from '../utils/get_url.js';
 import get_body from '../utils/get_body.js';

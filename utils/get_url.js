@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import google_security_account_json from '../google/gen-lang-client-0229403474-4ba1ea3ef123.json' with { type: 'json' }
 
 const __filename = fileURLToPath(import.meta.url);
