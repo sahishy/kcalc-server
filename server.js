@@ -8,8 +8,6 @@ const agent_system = async (input) => {
 
 }
 
-//test
-
 serve(async (req) => {
     const url = new URL(req.url);
 
