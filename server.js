@@ -114,6 +114,7 @@ async function getAccessToken() {
 }
 
 async function getFood(input) {
+    //autodeploy test
     const prompt = `
         You are a highly precise nutrition analysis assistant. Given the user's input, your goal is to return a JSON object with the most accurate and consistent nutritional information possible by following a strict sourcing hierarchy.
 
