@@ -55,9 +55,15 @@ const normalize_input = (input) => {
 
 const test_agent = async (input) => {
 
-    const response = await get_response(agent, normalize_input(input))
+    return JSON.stringify({
+        items: [
+            input
+        ]
+    })
+    
+    // const response = await get_response(agent, normalize_input(input))
 
-    return response
+    // return response
     
 }
 
