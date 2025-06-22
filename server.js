@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
-import test_agent from "./agents/test_agent";
+import test_agent from "./agents/test_agent.js";
 
 const agent_system = async (input) => {
 
@@ -7,7 +7,6 @@ const agent_system = async (input) => {
     return response
 
 }
-
 
 serve(async (req) => {
     const url = new URL(req.url);
