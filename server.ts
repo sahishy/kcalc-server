@@ -115,75 +115,99 @@ async function getAccessToken() {
 
 async function getFood(input: string) {
     const prompt = `
-        You are a highly precise nutrition analysis assistant. Given the user's input, your goal is to return a JSON object with the most accurate and consistent nutritional information possible by following a strict sourcing hierarchy.
+        User Input: "${input}"
 
-        Here is the user's input: ${input}
+        You are a highly precise nutrition analysis assistant. Given the user's input, your goal is to return a JSON object with the most accurate and CONSISTENT nutritional information by following a strict sourcing hierarchy and standardization rules.
+        CRITICAL CONSISTENCY RULES:
 
-        You MUST adhere to the following sourcing hierarchy to find the data for EACH item:
+        IDENTICAL INPUTS MUST PRODUCE IDENTICAL OUTPUTS - You must use the same reference data every time for the same food item
+        For generic items, you MUST use USDA FoodData Central as your PRIMARY and ONLY source
+        Always use the most common/standard serving size and preparation method unless explicitly specified
+        When multiple varieties exist, default to the most common variety (e.g., for "apple" always use "raw apple with skin")
 
-        **1. Branded Products First:**
-        - If an item is a specific branded product (e.g., 'McDonald's Chicken McGriddle', 'Ben & Jerry's Cherry Garcia', 'Starbucks Grande Latte'), you MUST prioritize finding the official nutritional information directly from the brand's official website or their published nutritional data.
-        - Your search should be targeted to find this official data.
+        SOURCING HIERARCHY:
+        1. Branded Products:
 
-        **2. Generic Foods from Reputable Databases:**
-        - If an item is generic (e.g., 'banana', 'cooked chicken breast', 'quinoa'), you should retrieve the data from a major, reputable nutritional database. Trustworthy options include USDA FoodData Central, Nutritionix, or Open Food Facts.
-        - For a generic item, use the most common or standard entry.
+        Use official brand nutritional data from the manufacturer's website or official nutritional guides
+        Be specific about product names and sizes
 
-        **3. Handling Failure to Find Data:**
-        - If, after a thorough search following the hierarchy above, you absolutely cannot find a reliable source for a specific item, you MUST return the item with 'null' for the nutritional values and add a descriptive note.
-        - Do NOT estimate or guess the nutritional values if a reliable source is not found.
+        2. Generic Foods - USDA FoodData Central ONLY:
 
-        **JSON Output Requirements:**
-        - Each food item in the JSON array must have:
-        - "description": The description of the food.
-        - "calories": Total calories (number).
-        - "protein": Total protein in grams (number).
-        - "fat": Total fat in grams (number).
-        - "carbs": Total carbohydrates in grams (number).
-        - "notes": A brief note on the data source (e.g., "From official McDonald's website.", "Generic data from USDA.", "Could not find a reliable source.").
+        For generic items, you MUST exclusively use USDA FoodData Central data
+        Use the "Survey (FNDDS)" entries when available as they represent typical consumption
+        If no Survey entry exists, use "SR Legacy" entries
+        Default assumptions for generic items:
 
-        Respond with ONLY a single, valid JSON object. Do NOT include markdown formatting or any explanatory text outside of the JSON.
+        Fruits/vegetables: raw, with skin when applicable
+        Meat: cooked, no added fat unless specified
+        Grains: cooked, plain unless specified
+        Dairy: whole milk versions unless specified
 
-        ---
+        3. Standardized Serving Sizes:
 
-        **EXAMPLE (For Formatting and Logic Reference Only):**
+        Use these exact serving sizes for consistency:
 
-        *NOTE: This example is to show the required JSON output format and the sourcing logic in action. Do not use these exact values for the user's input. The AI should find the values for the user's actual query.*
+        1 medium banana = 118g
+        1 medium apple = 182g
+        1 large egg = 50g
+        1 cup cooked rice = 158g
+        1 slice bread = 28g
+        1 tablespoon oil = 14g
+        100g for items specified by weight
 
-        **Example Input:**
+        4. Handling Missing Data:
 
-        '1 chicken mcgriddle and a banana'
+        If you cannot find the item in USDA FoodData Central or official brand sources, return null values with explanatory note
+        Do NOT estimate or use alternative databases for generic items
 
-        **Example Output:**
+        JSON OUTPUT REQUIREMENTS:
+        Each item must include:
 
-        json
-        {
+        "description": Standardized description of the food item
+        "calories": Total calories (number or null)
+        "protein": Protein in grams (number or null)
+        "fat": Total fat in grams (number or null)
+        "carbs": Total carbohydrates in grams (number or null)
+        "source": Specific data source used (e.g., "USDA FoodData Central - Survey", "Official McDonald's nutrition data", "Data not found")
+        "usda_code": Include USDA FDC ID when applicable (or null)
+
+        RESPONSE FORMAT:
+        Return ONLY a valid JSON object. No markdown formatting or explanatory text.
+
+        EXAMPLE:
+        Input: "1 banana and 1 McDonald's Big Mac"
+
+        Output:
+        json {
             "items": [
                 {
-                    "description": "1 chicken mcgriddle",
-                    "calories": 380,
-                    "protein": 14,
-                    "fat": 14,
-                    "carbs": 50,
-                    "notes": "Data from official McDonald's website."
-                },
-                {
-                    "description": "1 banana",
+                    "description": "1 medium banana (118g)",
                     "calories": 105,
                     "protein": 1.3,
                     "fat": 0.4,
                     "carbs": 27,
-                    "notes": "Generic data from reputable nutrition database."
+                    "source": "USDA FoodData Central - Survey",
+                    "usda_code": "1105314"
+                },
+                {
+                    "description": "1 McDonald's Big Mac",
+                    "calories": 563,
+                    "protein": 25,
+                    "fat": 33,
+                    "carbs": 45,
+                    "source": "Official McDonald's nutrition data",
+                    "usda_code": null
                 }
             ]
         }
+        Remember: Consistency is paramount. The same input must always produce the same output.
     `;
 
     const credentials = JSON.parse(Deno.env.get("GOOGLE_SECURITY_ACCOUNT_JSON"));
     const accessToken = await getAccessToken();
 
     // const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-central1/publishers/google/models/gemini-2.5-flash-preview-05-20:generateContent`;
-    const url = `https://us-east4-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/us-east4/publishers/google/models/gemini-2.0-flash-001:generateContent`;
+    const url = `https://us-east4-aiplatform.googleapis.com/v1/projects/${credentials.project_id}/locations/global/publishers/google/models/gemini-2.5-flash-lite-preview-06-17:generateContent`;
     const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -202,13 +226,13 @@ async function getFood(input: string) {
             generationConfig: {
                 maxOutputTokens: 1024,
                 temperature: 0,
-                topP: 0
+                topP: 0,
             },
             tools: [
                 {
                     googleSearch: {}
                 }
-            ]
+            ],
         }),
     });
 
