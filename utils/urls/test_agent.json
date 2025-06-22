@@ -1,0 +1,6 @@
+{
+    "location_id": "global",
+    "api_endpoint": "aiplatform.googleapis.com",
+    "model_id": "gemini-2.5-flash-lite-preview-06-17",
+    "generate_content_api": "generateContent"
+}
